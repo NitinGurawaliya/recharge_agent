@@ -128,9 +128,12 @@ export async function runJioRechargeAsync(
   const trimmed = validateNumber(number);
   const planKey = resolvePlan(plan);
 
+  const command = process.platform === "win32" ? "webcmd.cmd" : "webcmd";
+  const commandPath = path.resolve(__dirname, "../node_modules/.bin", command);
+
   try {
-    const { stdout } = await execAsync(
-      `webcmd jio recharge ${trimmed} ${planKey} -f json`,
+    const { stdout, stderr } = await execAsync(
+      `"${commandPath}" jio recharge ${trimmed} ${planKey} -f json`,
       {
         encoding: "utf8",
         timeout: 300_000,
@@ -142,14 +145,35 @@ export async function runJioRechargeAsync(
         },
       },
     );
+
+    if (stderr?.trim()) {
+      console.log("webcmd stderr:", stderr);
+    }
+
     return parseRechargeStdout(stdout, trimmed);
   } catch (error) {
-    const err = error as { stderr?: string; message?: string; code?: number | null };
-    const detail = (err.stderr || err.message || String(error)).trim();
+    const err = error as {
+      stderr?: string;
+      stdout?: string;
+      message?: string;
+      code?: number | null;
+    };
+
+    const stderr = String(err.stderr || "").trim();
+    const stdout = String(err.stdout || "").trim();
+    const message = String(err.message || "").trim();
+
+    console.error("=== WEBCMD ERROR ===");
+    console.error("exit code:", err.code);
+    console.error("stderr:", stderr);
+    console.error("stdout:", stdout);
+    console.error("message:", message);
+    console.error("====================");
+
     throw new Error(
       `webcmd jio recharge failed for ${trimmed} plan ${planKey}` +
         (err.code != null ? ` (exit ${err.code})` : "") +
-        (detail ? `: ${detail.split(/\r?\n/)[0]}` : ""),
+        (stderr ? `: ${stderr}` : message ? `: ${message}` : ""),
     );
   }
 }
