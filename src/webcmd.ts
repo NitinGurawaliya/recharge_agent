@@ -128,12 +128,25 @@ export async function runJioRechargeAsync(
   const trimmed = validateNumber(number);
   const planKey = resolvePlan(plan);
 
-  const command = process.platform === "win32" ? "webcmd.cmd" : "webcmd";
-  const commandPath = path.resolve(__dirname, "../node_modules/.bin", command);
+  const command =
+    process.platform === "win32" ? "webcmd.cmd" : "webcmd";
+
+  const commandPath = path.resolve(
+    __dirname,
+    "../node_modules/.bin",
+    command,
+  );
+
+  // Railway/Linux has no graphical X server.
+  // Run Webcmd through Xvfb so its headed Chromium can launch.
+  const executable =
+    process.platform === "win32"
+      ? `"${commandPath}"`
+      : `xvfb-run -a "${commandPath}"`;
 
   try {
     const { stdout, stderr } = await execAsync(
-      `"${commandPath}" jio recharge ${trimmed} ${planKey} -f json`,
+      `${executable} jio recharge ${trimmed} ${planKey} -f json`,
       {
         encoding: "utf8",
         timeout: 300_000,
@@ -173,7 +186,11 @@ export async function runJioRechargeAsync(
     throw new Error(
       `webcmd jio recharge failed for ${trimmed} plan ${planKey}` +
         (err.code != null ? ` (exit ${err.code})` : "") +
-        (stderr ? `: ${stderr}` : message ? `: ${message}` : ""),
+        (stderr
+          ? `: ${stderr}`
+          : message
+            ? `: ${message}`
+            : ""),
     );
   }
 }

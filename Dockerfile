@@ -21,6 +21,7 @@ RUN apt-get update && apt-get install -y \
     libatspi2.0-0 \
     fonts-liberation \
     ca-certificates \
+    xvfb \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
