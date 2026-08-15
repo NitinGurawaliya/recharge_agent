@@ -24,7 +24,7 @@ import {
 } from "./whatsapp-intent";
 import { generatingText, planMenuText, welcomeText } from "./whatsapp-ui";
 
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 const WEBHOOK_WAIT_MS = 13_000;
 
 const app = express();
@@ -84,7 +84,7 @@ function escapeXml(value: string): string {
 function publicBaseUrl(): string {
   const base = process.env.PUBLIC_BASE_URL?.trim().replace(/\/$/, "");
   if (!base) {
-    throw new Error("PUBLIC_BASE_URL must be set to your current ngrok https URL");
+    throw new Error("PUBLIC_BASE_URL must be set to your public HTTPS URL");
   }
   return base;
 }

@@ -95,8 +95,10 @@ export function runJioRecharge(
   const planKey = resolvePlan(plan);
 
   let stdout: string;
+  const command = process.platform === 'win32' ? 'webcmd.cmd' : 'webcmd';
+  const commandPath = path.resolve(__dirname, '../node_modules/.bin', command);
   try {
-    stdout = execSync(`webcmd jio recharge ${trimmed} ${planKey} -f json`, {
+    stdout = execSync(`"${commandPath}" jio recharge ${trimmed} ${planKey} -f json`, {
       encoding: "utf8",
       timeout: 300_000,
       windowsHide: true,
